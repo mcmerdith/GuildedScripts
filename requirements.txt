@@ -1,0 +1,5 @@
+autopep8==2.0.2
+oyaml==1.0
+pycodestyle==2.10.0
+PyYAML==6.0
+tomli==2.0.1

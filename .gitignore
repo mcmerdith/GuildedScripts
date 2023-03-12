@@ -2,3 +2,6 @@
 item/
 plugins/
 venv/
+__pycache__/
+build/
+dist/

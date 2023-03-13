@@ -66,8 +66,7 @@ def require_plugin(plugin: str, paths: list[str]):
 
 
 def list_configurations(plugin: str, path: str) -> list[str]:
-    """Require a plugin and subdirectories to be present
-
+    """Require a plugin and subdirectories to be present.
     Prints errors if there were any
 
     Parameters:
@@ -84,7 +83,14 @@ def list_configurations(plugin: str, path: str) -> list[str]:
     )
 
 
-def _file_ok(file: str, force: bool):
+def _file_ok(file: str, force: bool) -> bool:
+    """Check if a file exists and is OK to process. Will prompt user
+    to overwrite backups if they exist (unless force is set)
+
+    Parameters:
+        file  : The file to check
+        force : Overwrite backups if they exist"""
+
     if not os.path.exists(file):
         print(f"Skipping {file}: no file")
         return False
@@ -99,10 +105,22 @@ def _file_ok(file: str, force: bool):
 
 
 def validate_files(files: list[str], force: bool) -> list[str]:
+    """Validate that a list of files exist and are okay to process. Will prompt user
+    to overwrite backups if they exist (unless force is set)
+
+    Parameters:
+        file  : The files to check
+        force : Overwrite backups if they exist"""
     return [file for file in files if _file_ok(file, force)]
 
 
 def prompt_bool(prompt: str) -> bool:
+    """Prompt the user for y/N input
+
+    Format: {prompt} [y/N]
+
+    Parameters:
+        prompt : The prompt to print"""
     while True:
         result = input(
             f"{prompt} [y/N] "

@@ -160,6 +160,10 @@ def prompt_bool(prompt: str) -> bool:
 # Yaml configuration type definition
 ConfigurationType = dict[str, "ConfigurationType"]
 ItemType = dict[str,]
+ConfigurationProcessor = Callable[[ConfigurationType], None]
+"""Consume and modify a configuration"""
+ItemProcessor = Callable[[ItemType], bool]
+"""Consume and modify an item, returning if the item was modified"""
 
 
 def open_and_backup_yaml_configuration(path: str) -> ConfigurationType | None:
@@ -190,7 +194,7 @@ def save_yaml_configuration(path: str, configuration: ConfigurationType):
         yaml.dump(configuration, file, allow_unicode=True)
 
 
-def each_file(paths: list[str], processor: Callable[[ConfigurationType], None]):
+def each_file(paths: list[str], processor: ConfigurationProcessor):
     """Execute the processor on all configuration files
 
     Parameters:
@@ -208,7 +212,7 @@ def each_file(paths: list[str], processor: Callable[[ConfigurationType], None]):
         save_yaml_configuration(path, configuration)
 
 
-def each_item(configuration: ConfigurationType, processor: Callable[[ItemType], bool]):
+def each_item(configuration: ConfigurationType, processor: ItemProcessor):
     """Execute the processor on all items in the configuration
 
     Parameters:

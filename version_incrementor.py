@@ -26,14 +26,15 @@ def main():
 
     if filenames is None or len(filenames) == 0:
         filenames = guildedlib.list_configurations("MMOItems", "item")
+    else:
+        filenames = guildedlib.get_data_files("MMOItems", "item", filenames)
 
     filenames = guildedlib.validate_files(filenames, force)
 
-    for path in filenames:
-        guildedlib.process_file(
-            path,
-            lambda item_file: guildedlib.each_item(item_file, processor)
-        )
+    guildedlib.each_file(
+        filenames,
+        lambda item_file: guildedlib.each_item(item_file, processor)
+    )
 
 
 if __name__ == "__main__":

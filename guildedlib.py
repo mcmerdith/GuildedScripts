@@ -72,6 +72,10 @@ def get_data_dir(plugin: str, path: str | None) -> str:
     return f"plugins/{plugin}{'' if path is None else ('/'+path)}"
 
 
+def get_data_files(plugin: str, path: str | None, files: list[str]) -> list[str]:
+    return [get_data_dir(plugin, path) + "/" + file for file in files]
+
+
 def list_configurations(plugin: str, path: str | None) -> list[str]:
     """Require a plugin and subdirectories to be present.
     Prints errors if there were any
@@ -97,7 +101,7 @@ def list_configurations(plugin: str, path: str | None) -> list[str]:
         exit()
 
     return [
-        f"plugins/{get_data_dir(plugin, path)}/{file}" for file in files
+        f"{get_data_dir(plugin, path)}/{file}" for file in files
     ]
 
 
@@ -130,7 +134,7 @@ def validate_files(files: list[str], force: bool) -> list[str]:
         file  : The files to check
         force : Overwrite backups if they exist"""
 
-    return [file for file in files if _file_ok(file)]
+    return [file for file in files if _file_ok(file, force)]
 
 
 def prompt_bool(prompt: str) -> bool:
@@ -186,20 +190,30 @@ def save_yaml_configuration(path: str, configuration: ConfigurationType):
         yaml.dump(configuration, file, allow_unicode=True)
 
 
-def process_file(path: str, processor: Callable[[ConfigurationType],]):
-    configuration = open_and_backup_yaml_configuration(path)
+def each_file(paths: list[str], processor: Callable[[ConfigurationType], None]):
+    """Execute the processor on all configuration files
 
-    if configuration is None:
-        print(f"Skipping: empty")
-        return
+    Parameters:
+        paths     : A list of relative configuration file paths
+        processor : Called on each configuration file"""
+    for path in paths:
+        configuration = open_and_backup_yaml_configuration(path)
 
-    processor(configuration)
+        if configuration is None:
+            print(f"Skipping: empty")
+            continue
 
-    save_yaml_configuration(path, configuration)
+        processor(configuration)
+
+        save_yaml_configuration(path, configuration)
 
 
 def each_item(configuration: ConfigurationType, processor: Callable[[ItemType], bool]):
-    """Execute the processor on all items in the configuration"""
+    """Execute the processor on all items in the configuration
+
+    Parameters:
+        configuration : An item configuration file
+        processor     : Called on each item"""
     i = 0
     for item_name in configuration:
         if processor(configuration[item_name]["base"]):

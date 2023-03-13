@@ -2,6 +2,8 @@ import getopt
 import sys
 import os
 
+import yaml
+
 
 def process_arguments(script_name: str, help_msg: str) -> tuple[bool, bool, list[tuple, str], list[str]]:
     """Process argv with getopt.
@@ -111,6 +113,7 @@ def validate_files(files: list[str], force: bool) -> list[str]:
     Parameters:
         file  : The files to check
         force : Overwrite backups if they exist"""
+
     return [file for file in files if _file_ok(file, force)]
 
 
@@ -120,7 +123,10 @@ def prompt_bool(prompt: str) -> bool:
     Format: {prompt} [y/N]
 
     Parameters:
-        prompt : The prompt to print"""
+        prompt : The prompt to print
+
+    Returns: The users input"""
+
     while True:
         result = input(
             f"{prompt} [y/N] "
@@ -129,3 +135,33 @@ def prompt_bool(prompt: str) -> bool:
             return True
         elif result == "n" or result == "":
             return False
+
+
+# Yaml configuration type definition
+ConfigurationType = dict[str, "ConfigurationType"]
+
+
+def open_and_backup_yaml_configuration(path: str) -> ConfigurationType | None:
+    """Open a configuration file and backup its contents
+
+    Parameters:
+        path : The relative path to the configuration file"""
+
+    with open(path, 'r', encoding='utf-8') as file:
+        with open(path + '.backup', 'w', encoding='utf-8') as backup:
+            backup.write(file.read())
+
+        file.seek(0)
+
+        return yaml.safe_load(file)
+
+
+def save_yaml_configuration(path: str, configuration: ConfigurationType):
+    """Save a configuration file
+
+    Parameters:
+        path          : The relative path to the configuration file
+        configuration : The configuration to save"""
+
+    with open(path, 'w', encoding='utf-8') as file:
+        yaml.dump(configuration, file, allow_unicode=True)

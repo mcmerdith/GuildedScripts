@@ -31,32 +31,23 @@ def main():
     ], force)
 
     for path in filenames:
-        item_file: dict[str, dict]
+        item_file = guildedlib.open_and_backup_yaml_configuration(path)
 
-        with open(path, 'r', encoding='utf-8') as file:
-            with open(path + '.backup', 'w', encoding='utf-8') as backup:
-                backup.write(file.read())
+        if (item_file is None):
+            print(f"Skipping {path}: empty")
+            continue
 
-            file.seek(0)
+        print(f"Parsing {path}")
 
-            item_file = yaml.safe_load(file)
+        i = 0
+        for item_name in item_file:
+            if "revision-id" in item_file[item_name]["base"].keys():
+                item_file[item_name]["base"]["revision-id"] += 1
+                i += 1
 
-            if (item_file is None):
-                print(f"Skipping {path}: empty")
-                continue
+        print(f"Updated {i} items")
 
-            print(f"Parsing {path}")
-
-            i = 0
-            for item_name in item_file:
-                if "revision-id" in item_file[item_name]["base"].keys():
-                    item_file[item_name]["base"]["revision-id"] += 1
-                    i += 1
-
-            print(f"Updated {i} items")
-
-        with open(path, 'w', encoding='utf-8') as file:
-            yaml.dump(item_file, file, allow_unicode=True)
+        guildedlib.save_yaml_configuration(path, item_file)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import getopt
 import sys
 import os
+from typing import Any, Callable
 
 import yaml
 
@@ -67,7 +68,11 @@ def require_plugin(plugin: str, paths: list[str]):
             exit()
 
 
-def list_configurations(plugin: str, path: str) -> list[str]:
+def get_data_dir(plugin: str, path: str | None) -> str:
+    return f"plugins/{plugin}{'' if path is None else ('/'+path)}"
+
+
+def list_configurations(plugin: str, path: str | None) -> list[str]:
     """Require a plugin and subdirectories to be present.
     Prints errors if there were any
 
@@ -78,11 +83,22 @@ def list_configurations(plugin: str, path: str) -> list[str]:
     Returns:
         The list of files"""
 
-    return list(
+    files = list(
         filter(lambda file: not file.endswith(
             ".backup"
-        ), os.listdir(f"plugins/{plugin}/{path}"))
+        ), os.listdir(get_data_dir(plugin, path)))
     )
+
+    for arg in files:
+        print(f"Found {arg}")
+
+    if not prompt_bool("OK?"):
+        print(f"Provide desired file names as arguments to the script")
+        exit()
+
+    return [
+        f"plugins/{get_data_dir(plugin, path)}/{file}" for file in files
+    ]
 
 
 def _file_ok(file: str, force: bool) -> bool:
@@ -106,7 +122,7 @@ def _file_ok(file: str, force: bool) -> bool:
     return True
 
 
-def validate_files(files: list[str], force: bool) -> list[str]:
+def validate_files(plugin: str, path: str | None, files: list[str], force: bool) -> list[str]:
     """Validate that a list of files exist and are okay to process. Will prompt user
     to overwrite backups if they exist (unless force is set)
 
@@ -114,7 +130,7 @@ def validate_files(files: list[str], force: bool) -> list[str]:
         file  : The files to check
         force : Overwrite backups if they exist"""
 
-    return [file for file in files if _file_ok(file, force)]
+    return [file for file in files if _file_ok(file)]
 
 
 def prompt_bool(prompt: str) -> bool:
@@ -139,6 +155,7 @@ def prompt_bool(prompt: str) -> bool:
 
 # Yaml configuration type definition
 ConfigurationType = dict[str, "ConfigurationType"]
+ItemType = dict[str,]
 
 
 def open_and_backup_yaml_configuration(path: str) -> ConfigurationType | None:
@@ -153,6 +170,8 @@ def open_and_backup_yaml_configuration(path: str) -> ConfigurationType | None:
 
         file.seek(0)
 
+        print(f"Parsing {path}")
+
         return yaml.safe_load(file)
 
 
@@ -165,3 +184,13 @@ def save_yaml_configuration(path: str, configuration: ConfigurationType):
 
     with open(path, 'w', encoding='utf-8') as file:
         yaml.dump(configuration, file, allow_unicode=True)
+
+
+def each_item(configuration: ConfigurationType, processor: Callable[[ItemType], bool]):
+    """Execute the processor on all items in the configuration"""
+    i = 0
+    for item_name in configuration:
+        if processor(configuration[item_name]["base"]):
+            i += 1
+
+    print(f"Updated {i} items")

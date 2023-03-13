@@ -122,7 +122,7 @@ def _file_ok(file: str, force: bool) -> bool:
     return True
 
 
-def validate_files(plugin: str, path: str | None, files: list[str], force: bool) -> list[str]:
+def validate_files(files: list[str], force: bool) -> list[str]:
     """Validate that a list of files exist and are okay to process. Will prompt user
     to overwrite backups if they exist (unless force is set)
 
@@ -184,6 +184,18 @@ def save_yaml_configuration(path: str, configuration: ConfigurationType):
 
     with open(path, 'w', encoding='utf-8') as file:
         yaml.dump(configuration, file, allow_unicode=True)
+
+
+def process_file(path: str, processor: Callable[[ConfigurationType],]):
+    configuration = open_and_backup_yaml_configuration(path)
+
+    if configuration is None:
+        print(f"Skipping: empty")
+        return
+
+    processor(configuration)
+
+    save_yaml_configuration(path, configuration)
 
 
 def each_item(configuration: ConfigurationType, processor: Callable[[ItemType], bool]):

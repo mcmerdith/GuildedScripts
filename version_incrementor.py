@@ -30,15 +30,10 @@ def main():
     filenames = guildedlib.validate_files(filenames, force)
 
     for path in filenames:
-        item_file = guildedlib.open_and_backup_yaml_configuration(path)
-
-        if item_file is None:
-            print(f"Skipping: empty")
-            continue
-
-        guildedlib.each_item(item_file, processor)
-
-        guildedlib.save_yaml_configuration(path, item_file)
+        guildedlib.process_file(
+            path,
+            lambda item_file: guildedlib.each_item(item_file, processor)
+        )
 
 
 if __name__ == "__main__":
